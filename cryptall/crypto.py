@@ -73,6 +73,7 @@ UNICODE_SPACE = UnicodeSpace()
 class BruteforceContext(object):
     def __init__(self):
         self.dictionaries = {}
+        self.freqs = {}
 
     def load(self, lang, filename, encoding='utf-8'):
         with open(filename, 'r', encoding=encoding) as f:
@@ -84,9 +85,49 @@ class BruteforceContext(object):
                 return k
         return None
 
+    def load_freqs(self, lang: str, space: Space) -> [float]:
+        words = self.dictionaries[lang]
+
+        total = 0.0
+        for word in words:
+            for c in word:
+                if space.ord(c) is not None:
+                    total += 1
+
+        freqs = []
+        for x in space.range():
+            occur = 0
+            for word in words:
+                for c in word:
+                    if c == x:
+                        occur += 1
+            freqs.append(occur / total)
+
+        self.freqs[lang] = sorted([
+            (space.chr(idx), freqs[idx])
+            for idx in range(0, len(freqs))
+        ], key=lambda a: a[1], reverse=True)
+
 
 KE = TypeVar('KE')
 KD = TypeVar('KD')
+
+
+def list_shift_places(xs, n):
+    res = []
+    for idx in range(len(xs) - n, len(xs)):
+        res.append(xs[idx])
+    for idx in range(0, len(xs) - n):
+        res.append(xs[idx])
+    return res
+
+
+def freq_word(word: str, space: Space) -> [float]:
+    total = float(sum(1 for c in word if space.ord(c) is not None))
+    return sorted([
+        (c, sum(1 for x in word if x == c) / total)
+        for c in space.range()
+    ], key=lambda x: x[1], reverse=True)
 
 
 class Crypto(object):
@@ -123,3 +164,22 @@ class Crypto(object):
                 break
 
         return sorted(res, key=lambda x: x[2], reverse=True)
+
+    def guess_with_charac_freq(self, text: str, ctx: BruteforceContext, max_error=0.1) -> {str: str}:
+        freqs_for_word = [c for c, freq in freq_word(text, self.space)]
+
+        results = {}
+
+        for lang, freqs in ctx.freqs.items():
+            freqs2 = [c for c, freq in freqs]
+            result = ''
+
+            for c in text:
+                if self.space.ord(c) is None:
+                    result += c
+                else:
+                    result += freqs2[freqs_for_word.index(c)]
+
+            results[lang] = result
+
+        return results
