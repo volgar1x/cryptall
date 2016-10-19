@@ -11,3 +11,8 @@ Supported algorithms are :
 * Affine
 
 This project is conducted as part of my cryptology classes at University of Rouen.
+
+## Credits
+
+* [French dictionary](http://www.pallier.org/ressources/dicofr/liste.de.mots.francais.frgut.txt)
+* [English dictionary](https://github.com/dwyl/english-words/raw/master/words3.txt)
