@@ -4,6 +4,7 @@ import unittest
 
 from cryptall.caesar import Caesar
 from cryptall.vigenere import Vigenere
+from cryptall.affine import Affine
 from cryptall.crypto import BruteforceContext, StrSpace, ALPHABET_SPACE, UNICODE_SPACE, list_shift_places
 
 
@@ -28,7 +29,7 @@ cryptos = [
     (Vigenere(ALPHABET_SPACE), 'comment ça va ?', 'ezqoprv çc zc ?', 'cle', 'cle'),
 
     # chiffrement affine
-    # …
+    (Affine(ALPHABET_SPACE), 'bonjour le monde', 'eryarbw mj fryqj', (19, 11), (19, 11)),
 ]
 
 
@@ -57,18 +58,18 @@ class TestCrypto(unittest.TestCase):
 
     def test_bruteforce(self):
         for crypto, text, crypted, ke, kd in cryptos:
+            print('start bruteforcing {0} for clear text "{1}"'.format(crypto.__class__.__name__, text))
             found = crypto.bruteforce(crypted, ctx)
 
             if not found:
                 self.fail('couldnt bruteforce "{0}" for crypto {1}'.format(text, crypto.__class__.__name__))
 
             for clear, found_kd, proba in found:
+                self.assertTrue(0.0 <= proba <= 1.0, '0 < {0} < 1'.format(proba))
                 if text == clear:
                     self.assertEqual(kd, found_kd, 'invalid kd for "{0}"'.format(text))
-                    self.assertAlmostEqual(1.0, proba, delta=0.01)
                 else:
                     print(text, clear, found_kd)
-                    self.assertTrue(0.0 <= proba <= 1.0, '0 < {0} < 1'.format(proba))
 
     def test_ctx_freqs_should_equal_1(self):
         for lang in ctx.freqs.keys():
